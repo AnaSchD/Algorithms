@@ -1,6 +1,5 @@
 package skypro.com.algorithms;
 
-import skypro.com.algorithms.exception.ElementNotFoundException;
 import skypro.com.algorithms.exception.InvalidIndexException;
 import skypro.com.algorithms.exception.NullItemException;
 import skypro.com.algorithms.exception.RepositoryIsFullException;
@@ -9,7 +8,7 @@ import java.util.Arrays;
 
 public class IntegerListImpl implements IntegerList {
 
-    private final Integer[] repository;
+    private Integer[] repository;
     private int size;
 
     public IntegerListImpl() {
@@ -23,7 +22,7 @@ public class IntegerListImpl implements IntegerList {
 
     @Override
     public Integer add(Integer item) {
-        validateSize();
+        growIfNeeded();
         validateItem(item);
 
         repository[size++] = item;
@@ -33,7 +32,7 @@ public class IntegerListImpl implements IntegerList {
     @Override
     public Integer add(int index, Integer item) {
         validateItem(item);
-        validateSize();
+        growIfNeeded();
         validateIndex(index);
 
         if (index == size) {
@@ -59,7 +58,7 @@ public class IntegerListImpl implements IntegerList {
         validateItem(item);
 
         int index = indexOf(item);
-       return remove(index);
+        return remove(index);
     }
 
     @Override
@@ -77,9 +76,9 @@ public class IntegerListImpl implements IntegerList {
 
     @Override
     public boolean contains(Integer item) {
-        Integer [] storageCopy = toArray();
-        sort(storageCopy);
-        return binarySearch(storageCopy, item);
+        Integer[] repositoryCopy = toArray();
+        sort(repositoryCopy);
+        return binarySearch(repositoryCopy, item);
     }
 
     @Override
@@ -142,9 +141,9 @@ public class IntegerListImpl implements IntegerList {
         }
     }
 
-    private void validateSize() {
+    private void growIfNeeded() {
         if (size == repository.length) {
-            throw new RepositoryIsFullException();
+            grow();
         }
     }
 
@@ -155,18 +154,40 @@ public class IntegerListImpl implements IntegerList {
     }
 
     private void sort(Integer[] arr) {
-        for (int i = 1; i < arr.length; i++) {
-            int temp = arr[i];
-            int j = i;
-            while (j > 0 && arr[j - 1] >= temp) {
-                arr[j] = arr[j - 1];
-                j--;
-            }
-            arr[j] = temp;
+        quickSort(arr, 0, arr.length -1);
+    }
+
+    private void quickSort (Integer [] arr, int begin, int end) {
+        if (begin < end) {
+            int partitionIndex = partition(arr, begin, end);
+
+            quickSort(arr, begin, partitionIndex - 1);
+            quickSort(arr, partitionIndex + 1, end);
         }
     }
 
-    private boolean binarySearch (Integer[] arr,Integer item) {
+    private static int partition(Integer[] arr, int begin, int end) {
+        int pivot = arr[end];
+        int i = (begin - 1);
+
+        for (int j = begin; j < end; j++) {
+            if (arr[j] <= pivot) {
+                i++;
+
+                swapElements(arr, i, j);
+            }
+        }
+        swapElements(arr, i + 1, end);
+        return i + 1;
+    }
+
+    private static void swapElements(Integer[] arr, int i1, int j2) {
+        int temp = arr[i1];
+        arr[i1] = arr[j2];
+        arr[j2] = temp;
+    }
+
+    private boolean binarySearch(Integer[] arr, Integer item) {
         int min = 0;
         int max = arr.length - 1;
 
@@ -182,5 +203,9 @@ public class IntegerListImpl implements IntegerList {
             }
         }
         return false;
+    }
+
+    private void grow() {
+        repository = Arrays.copyOf(repository, size + size / 2);
     }
 }
